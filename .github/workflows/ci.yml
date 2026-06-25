@@ -1,0 +1,9 @@
+name: Clear Pipeline
+
+on: [workflow_dispatch]
+jobs:
+  empty_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Empty step
+        run: echo "Пустой шаг"
