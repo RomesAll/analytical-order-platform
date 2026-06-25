@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+
+
+networks:
+  public:
+    driver: bridge
+  private:
+    driver: bridge
+    internal: True
