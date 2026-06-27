@@ -1,4 +1,42 @@
 services:
+  mongodb:
+    image: mongo:latest
+    container_name: mgdb
+    hostname: mgdb-host
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - public
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mgexp
+    hostname: mgexp-host
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+        ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+        ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+
+        ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
+        ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
+        ME_CONFIG_MONGODB_SERVER: mongodb
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - public
+
   pg-primary:
     image: postgres:15-alpine
     container_name: pg-primary
@@ -110,3 +148,4 @@ volumes:
   pg_primary_data:
   pg_replica_data_01:
   pg_replica_data_02:
+  mongodb_data:
