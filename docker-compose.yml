@@ -1,4 +1,25 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: rd
+    hostname: rd-host
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command:
+      - redis-server
+      - --port ${REDIS_PORT}
+      - --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - public
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mongodb:
     image: mongo:latest
     container_name: mgdb
@@ -149,3 +170,4 @@ volumes:
   pg_replica_data_01:
   pg_replica_data_02:
   mongodb_data:
+  redis_data:
