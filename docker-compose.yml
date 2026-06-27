@@ -1,0 +1,112 @@
+services:
+  pg-primary:
+    image: postgres:15-alpine
+    container_name: pg-primary
+    hostname: pg-primary-host
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      REPLICATION_USER: ${REPLICATION_USER}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      REPLICA1_SLOT: ${REPLICA1_SLOT}
+      REPLICA2_SLOT: ${REPLICA2_SLOT}
+    volumes:
+      - pg_primary_data:/var/lib/postgresql/data
+      - ./postgresql/master/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgresql/master/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgresql/master/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    networks:
+      - public
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pg-replica-01:
+    image: postgres:15-alpine
+    container_name: pg-replica-01
+    hostname: pg-replica-host-01
+    restart: unless-stopped
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      REPLICATION_USER: ${REPLICATION_USER}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      PRIMARY_HOST: pg-primary
+      REPLICA_SLOT: ${REPLICA1_SLOT}
+      REPLICA_NUM: 1
+    volumes:
+      - pg_replica_data_01:/var/lib/postgresql/data
+      - ./postgresql/replica/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgresql/replica/replica_entrypoint.sh:/replica_entrypoint.sh:ro
+    entrypoint: ['/replica_entrypoint.sh']
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - public
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pg-replica-02:
+    image: postgres:15-alpine
+    container_name: pg-replica-02
+    hostname: pg-replica-host-02
+    restart: unless-stopped
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      REPLICATION_USER: ${REPLICATION_USER}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      PRIMARY_HOST: pg-primary
+      REPLICA_SLOT: ${REPLICA2_SLOT}
+      REPLICA_NUM: 2
+    volumes:
+      - pg_replica_data_02:/var/lib/postgresql/data
+      - ./postgresql/replica/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgresql/replica/replica_entrypoint.sh:/replica_entrypoint.sh:ro
+    entrypoint: ['/replica_entrypoint.sh']
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - public
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  public:
+    driver: bridge
+  private:
+    driver: bridge
+    internal: True
+
+volumes:
+  pg_primary_data:
+  pg_replica_data_01:
+  pg_replica_data_02:
