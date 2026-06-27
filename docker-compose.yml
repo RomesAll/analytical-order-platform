@@ -1,4 +1,39 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: rd
+    hostname: rd-host
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --port ${REDIS_PORT} --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - public
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis_commander:
+    image: rediscommander/redis-commander:latest
+    container_name: rd-commander
+    hostname: rd-commander-host
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    networks:
+      - public
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOSTS=local:redis:${REDIS_PORT:-6379}:0:${REDIS_PASSWORD}
+      - HTTP_USER=${HTTP_USER}
+      - HTTP_PASSWORD=${HTTP_PASSWORD}
+
   mongodb:
     image: mongo:latest
     container_name: mgdb
@@ -149,3 +184,4 @@ volumes:
   pg_replica_data_01:
   pg_replica_data_02:
   mongodb_data:
+  redis_data:
