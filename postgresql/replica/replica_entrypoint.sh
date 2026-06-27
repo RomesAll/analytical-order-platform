@@ -7,6 +7,12 @@ echo "========================================="
 
 PGDATA="/var/lib/postgresql/data"
 
+if [ -s "$PGDATA/PG_VERSION" ]; then
+  echo "Данные уже есть, пропускаем pg_basebackup"
+  echo "Запускаем PostgreSQL"
+  exec docker-entrypoint.sh "$@"
+fi
+
 # Ждем мастер
 echo "Ожидание готовности Мастера"
 until PGPASSWORD=${REPLICATION_PASSWORD} pg_isready -h ${PRIMARY_HOST} -U ${REPLICATION_USER}; do
