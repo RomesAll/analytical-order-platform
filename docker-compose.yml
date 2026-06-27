@@ -1,4 +1,26 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rbmq
+    hostname: rbmq-host
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_ERLANG_COOKIE: "secret_cookie_value_123"
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - public
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   mongodb:
     image: mongo:latest
     container_name: mgdb
@@ -149,3 +171,4 @@ volumes:
   pg_replica_data_01:
   pg_replica_data_02:
   mongodb_data:
+  rabbitmq_data:
