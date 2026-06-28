@@ -1,4 +1,32 @@
 services:
+  worker:
+    build:
+      context: .
+      dockerfile: celery_dockerfile/Dockerfile
+    container_name: worker
+    restart: unless-stopped
+    command: >
+      celery -A app.infrastructure.message_brokers.celery_app worker 
+      --loglevel=${CELERY_LOG_LEVEL} 
+      --concurrency=${CELERY_WORKER_CONCURRENCY} 
+      -Q ${DEFAULT_QUEUE}
+    volumes:
+      - ./app:/app/app
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - public
+    deploy:
+      resources:
+        limits:
+          memory: 5G
+        reservations:
+          memory: 512M
+
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rbmq
@@ -74,6 +102,7 @@ services:
     volumes:
       - mongodb_data:/data/db
       - ./mongodb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
   mongo-express:
     image: mongo-express:latest
     container_name: mgexp
