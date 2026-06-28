@@ -1,0 +1,127 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+  domain_formatter:
+    format: '[%(asctime)s] | DOMAIN | %(message)s'
+    datefmt: '%Y-%m-%d %H-%M'
+
+  use_case_formatter:
+    format: '[%(asctime)s] | %(levelname)s | USE CASE | %(message)s'
+    datefmt: '%Y-%m-%d %H-%M'
+
+  infrastructure_formatter:
+    format: '[%(asctime)s] | %(levelname)s | INFRASTRUCTURE | %(message)s'
+    datefmt: '%Y-%m-%d %H-%M'
+
+  interface_adapters_formatter:
+    format: '[%(asctime)s] | %(levelname)s | INTERFACE ADAPTER | %(message)s'
+    datefmt: '%Y-%m-%d %H-%M'
+
+  console_formatter:
+    format: '[%(asctime)s] | %(levelname)s | %(filename)s | %(message)s'
+    datefmt: '%Y-%m-%d %H-%M'
+
+  error_formatter:
+    format: '[%(asctime)s] | %(levelname)s | %(filename)s | %(funcName)s | %(lineno)s | %(process)s | %(message)s'
+    datefmt: '%Y-%m-%d %H-%M'
+
+filters:
+  errors_filter:
+    '()': 'app.logging.filters.ErrorLevelFilter'
+  not_errors_filter:
+    '()': 'app.logging.filters.NotErrorLevelFilter'
+
+handlers:
+  domain_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    filename: logs/domain.log
+    maxBytes: 10485760
+    backupCount: 10
+    level: DEBUG
+    formatter: domain_formatter
+
+  use_case_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    filename: logs/use_cases.log
+    maxBytes: 10485760
+    backupCount: 10
+    level: DEBUG
+    formatter: use_case_formatter
+
+  infrastructure_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    filename: logs/infrastructure.log
+    maxBytes: 10485760
+    backupCount: 10
+    level: DEBUG
+    formatter: infrastructure_formatter
+
+  interface_adapters_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    filename: logs/interface.log
+    maxBytes: 10485760
+    backupCount: 10
+    level: DEBUG
+    formatter: interface_adapters_formatter
+
+  errors_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    filename: logs/errors.log
+    maxBytes: 10485760
+    backupCount: 10
+    level: ERROR
+    formatter: error_formatter
+
+  error_console_handler:
+    class: logging.StreamHandler
+    level: ERROR
+    formatter: error_formatter
+    stream: ext://sys.stderr
+    filters:
+      - errors_filter
+
+  console_handler:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: console_formatter
+    stream: ext://sys.stdout
+    filters:
+      - not_errors_filter
+
+loggers:
+  root:
+    level: ERROR
+    handlers:
+      - error_console_handler
+      - errors_file_handler
+
+  app:
+    level: %{LOG_LEVEL_APP}
+    handlers:
+      - console_handler
+    propagate: True
+
+  app.domain:
+    level: %{LOG_LEVEL_DOMAIN}
+    handlers:
+      - domain_file_handler
+    propagate: True
+
+  app.use_case:
+    level: %{LOG_LEVEL_USE_CASES}
+    handlers:
+      - use_case_file_handler
+    propagate: True
+
+  app.infrastructure:
+    level: %{LOG_LEVEL_INFRASTRUCTURE}
+    handlers:
+      - infrastructure_file_handler
+    propagate: True
+
+  app.interface_adapters:
+    level: %{LOG_LEVEL_INTERFACE}
+    handlers:
+      - interface_adapters_file_handler
+    propagate: True
