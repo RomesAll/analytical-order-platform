@@ -97,31 +97,31 @@ loggers:
       - errors_file_handler
 
   app:
-    level: DEBUG
+    level: %{LOG_LEVEL_APP}
     handlers:
       - console_handler
     propagate: True
 
   app.domain:
-    level: DEBUG
+    level: %{LOG_LEVEL_DOMAIN}
     handlers:
       - domain_file_handler
     propagate: True
 
   app.use_case:
-    level: DEBUG
+    level: %{LOG_LEVEL_USE_CASES}
     handlers:
       - use_case_file_handler
     propagate: True
 
   app.infrastructure:
-    level: DEBUG
+    level: %{LOG_LEVEL_INFRASTRUCTURE}
     handlers:
       - infrastructure_file_handler
     propagate: True
 
   app.interface_adapters:
-    level: DEBUG
+    level: %{LOG_LEVEL_INTERFACE}
     handlers:
       - interface_adapters_file_handler
     propagate: True
